@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>우와 신기하다</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .game-container {
+            position: relative;
+            width: 90vw;
+            height: 90vh;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .character {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 10;
+        }
+        
+        .smile-face {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(145deg, #ffeb3b, #ffc107);
+            border-radius: 50%;
+            box-shadow: 0 10px 30px rgba(255, 193, 7, 0.5);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        
+        .eyes {
+            display: flex;
+            gap: 25px;
+            margin-bottom: 10px;
+        }
+        
+        .eye {
+            width: 15px;
+            height: 15px;
+            background: #000;
+            border-radius: 50%;
+        }
+        
+        .mouth {
+            width: 50px;
+            height: 25px;
+            border: 4px solid #000;
+            border-top: none;
+            border-radius: 0 0 50px 50px;
+        }
+        
+        .jumping {
+            animation: jump 0.4s ease-in-out;
+        }
+        
+        @keyframes jump {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-50px) scale(1.1); }
+        }
+        
+        .firework {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 5;
+        }
+        
+        @keyframes explode {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0);
+            }
+        }
+        
+        .instruction {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 30px;
+            border-radius: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 20;
+        }
+        
+        .press-effect {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            border: 5px solid rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: ripple 0.6s ease-out;
+            z-index: 1;
+        }
+        
+        @keyframes ripple {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(2);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container" id="gameContainer">
+        <div class="instruction">Enter 키를 눌러보세요! 🎮</div>
+        <div class="character" id="character">
+            <div class="smile-face">
+                <div class="eyes">
+                    <div class="eye"></div>
+                    <div class="eye"></div>
+                </div>
+                <div class="mouth"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const positions = [
+            { x: '10%', y: '70%' },   // 왼쪽 아래 (시작)
+            { x: '40%', y: '70%' },   // 왼쪽 아래 중간
+            { x: '70%', y: '70%' },   // 오른쪽 아래 끝
+            { x: '40%', y: '40%' },   // 중앙 (대각선 중간)
+            { x: '10%', y: '10%' },   // 왼쪽 위 끝
+            { x: '40%', y: '10%' },   // 왼쪽 위 중간
+            { x: '70%', y: '10%' },   // 오른쪽 위 끝
+            { x: '40%', y: '40%' },   // 중앙 (대각선 중간)
+        ];
+        
+        let currentPos = 0;
+        let lastPressTime = 0;
+        let isAnimating = false;
+        
+        const character = document.getElementById('character');
+        const gameContainer = document.getElementById('gameContainer');
+        
+        // 초기 위치 설정
+        character.style.left = positions[0].x;
+        character.style.top = positions[0].y;
+        
+        // 효과음 생성 (Web Audio API)
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound() {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            // 더욱 다양한 음계 (2옥타브)
+            const frequencies = [
+                196, 220, 247, 262, 294, 330, 349, 392, 
+                440, 494, 523, 587, 659, 698, 784, 880
+            ];
+            const randomFreq = frequencies[Math.floor(Math.random() * frequencies.length)];
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = randomFreq;
+            
+            // 더 다양한 음색
+            const waveTypes = ['sine', 'square', 'sawtooth', 'triangle'];
+            oscillator.type = waveTypes[Math.floor(Math.random() * waveTypes.length)];
+            
+            // 다양한 볼륨과 지속시간
+            const volume = 0.15 + Math.random() * 0.15;
+            const duration = 0.2 + Math.random() * 0.2;
+            
+            gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+            
+            // 가끔 화음 추가 (30% 확률)
+            if (Math.random() < 0.3) {
+                const oscillator2 = audioContext.createOscillator();
+                const gainNode2 = audioContext.createGain();
+                
+                oscillator2.connect(gainNode2);
+                gainNode2.connect(audioContext.destination);
+                
+                // 3도, 5도 화음
+                const harmonyInterval = Math.random() < 0.5 ? 1.25 : 1.5;
+                oscillator2.frequency.value = randomFreq * harmonyInterval;
+                oscillator2.type = waveTypes[Math.floor(Math.random() * waveTypes.length)];
+                
+                gainNode2.gain.setValueAtTime(volume * 0.5, audioContext.currentTime);
+                gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+                
+                oscillator2.start(audioContext.currentTime);
+                oscillator2.stop(audioContext.currentTime + duration);
+            }
+        }
+        
+        function createFireworks() {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#ff9ff3', '#54a0ff'];
+            const centerX = parseFloat(positions[currentPos].x);
+            const centerY = parseFloat(positions[currentPos].y);
+            
+            for (let i = 0; i < 12; i++) {
+                const firework = document.createElement('div');
+                firework.className = 'firework';
+                firework.style.background = colors[Math.floor(Math.random() * colors.length)];
+                
+                const angle = (i / 12) * Math.PI * 2;
+                const distance = 80 + Math.random() * 40;
+                const x = Math.cos(angle) * distance;
+                const y = Math.sin(angle) * distance;
+                
+                firework.style.left = centerX + '%';
+                firework.style.top = centerY + '%';
+                
+                gameContainer.appendChild(firework);
+                
+                setTimeout(() => {
+                    firework.style.animation = 'explode 0.8s ease-out forwards';
+                    firework.style.transform = `translate(${x}px, ${y}px)`;
+                }, 10);
+                
+                setTimeout(() => firework.remove(), 800);
+            }
+        }
+        
+        function createPressEffect() {
+            const effect = document.createElement('div');
+            effect.className = 'press-effect';
+            effect.style.left = positions[currentPos].x;
+            effect.style.top = positions[currentPos].y;
+            gameContainer.appendChild(effect);
+            
+            setTimeout(() => effect.remove(), 600);
+        }
+        
+        function moveCharacter() {
+            if (isAnimating) return;
+            
+            const now = Date.now();
+            if (now - lastPressTime < 100) return; // 너무 빠른 연타 방지
+            lastPressTime = now;
+            
+            isAnimating = true;
+            
+            // 효과음 재생
+            playSound();
+            
+            // 점프 애니메이션
+            character.classList.add('jumping');
+            
+            // 다음 위치로 이동
+            currentPos = (currentPos + 1) % positions.length;
+            
+            setTimeout(() => {
+                character.style.left = positions[currentPos].x;
+                character.style.top = positions[currentPos].y;
+            }, 100);
+            
+            // 폭죽 효과
+            createFireworks();
+            
+            // 버튼 누름 효과
+            createPressEffect();
+            
+            setTimeout(() => {
+                character.classList.remove('jumping');
+                isAnimating = false;
+            }, 400);
+        }
+        
+        // Enter 키 이벤트
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                e.preventDefault();
+                moveCharacter();
+            }
+        });
+        
+        // 화면 클릭으로도 작동 (터치 디바이스 지원)
+        gameContainer.addEventListener('click', (e) => {
+            if (!e.target.closest('.instruction')) {
+                moveCharacter();
+            }
+        });
+        
+        // 첫 번째 클릭/키 입력 시 오디오 컨텍스트 활성화
+        let audioInitialized = false;
+        function initAudio() {
+            if (!audioInitialized && audioContext.state === 'suspended') {
+                audioContext.resume();
+                audioInitialized = true;
+            }
+        }
+        
+        document.addEventListener('keydown', initAudio, { once: true });
+        document.addEventListener('click', initAudio, { once: true });
+    </script>
+</body>
+</html>
