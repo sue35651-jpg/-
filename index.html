@@ -51,6 +51,7 @@
             justify-content: center;
             align-items: center;
             position: relative;
+            transition: border-radius 0.4s ease;
         }
         
         .eyes {
@@ -103,20 +104,30 @@
             }
         }
         
-        .instruction {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+        .fullscreen-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
             background: rgba(255, 255, 255, 0.9);
-            padding: 15px 30px;
-            border-radius: 15px;
-            font-size: 24px;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 20px;
             font-weight: bold;
             color: #667eea;
-            text-align: center;
+            cursor: pointer;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             z-index: 20;
+            transition: all 0.3s ease;
+        }
+        
+        .fullscreen-btn:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: scale(1.05);
+        }
+        
+        .fullscreen-btn:active {
+            transform: scale(0.95);
         }
         
         .press-effect {
@@ -143,8 +154,8 @@
     </style>
 </head>
 <body>
+    <button class="fullscreen-btn" id="fullscreenBtn">🖥️ 전체화면</button>
     <div class="game-container" id="gameContainer">
-        <div class="instruction">Enter 키를 눌러보세요! 🎮</div>
         <div class="character" id="character">
             <div class="smile-face">
                 <div class="eyes">
@@ -167,6 +178,22 @@
             { x: '70%', y: '10%' },   // 오른쪽 위 끝
             { x: '40%', y: '40%' },   // 중앙 (대각선 중간)
         ];
+        
+        // 10가지 색상과 모양
+        const smileColors = [
+            { bg: 'linear-gradient(145deg, #ffeb3b, #ffc107)', shadow: 'rgba(255, 193, 7, 0.5)', shape: '50%' },  // 원 - 노랑
+            { bg: 'linear-gradient(145deg, #ff6b6b, #ee5a6f)', shadow: 'rgba(255, 107, 107, 0.5)', shape: '10%' },  // 둥근사각형 - 빨강
+            { bg: 'linear-gradient(145deg, #4ecdc4, #44a6a0)', shadow: 'rgba(78, 205, 196, 0.5)', shape: '50%' },  // 원 - 청록
+            { bg: 'linear-gradient(145deg, #a8e6cf, #7cc6a5)', shadow: 'rgba(168, 230, 207, 0.5)', shape: '20%' },  // 둥근사각형 - 연두
+            { bg: 'linear-gradient(145deg, #ff9ff3, #f368e0)', shadow: 'rgba(255, 159, 243, 0.5)', shape: '50%' },  // 원 - 분홍
+            { bg: 'linear-gradient(145deg, #ffd93d, #ffb700)', shadow: 'rgba(255, 217, 61, 0.5)', shape: '15%' },  // 둥근사각형 - 황금
+            { bg: 'linear-gradient(145deg, #a8dadc, #457b9d)', shadow: 'rgba(168, 218, 220, 0.5)', shape: '50%' },  // 원 - 하늘
+            { bg: 'linear-gradient(145deg, #dda15e, #bc6c25)', shadow: 'rgba(221, 161, 94, 0.5)', shape: '25%' },  // 둥근사각형 - 갈색
+            { bg: 'linear-gradient(145deg, #b8b8ff, #8a8aff)', shadow: 'rgba(184, 184, 255, 0.5)', shape: '50%' },  // 원 - 보라
+            { bg: 'linear-gradient(145deg, #fca5a5, #f87171)', shadow: 'rgba(252, 165, 165, 0.5)', shape: '30%' }   // 둥근사각형 - 연분홍
+        ];
+        
+        let currentColorIndex = 0;
         
         let currentPos = 0;
         let lastPressTime = 0;
@@ -281,14 +308,22 @@
             
             isAnimating = true;
             
-            // 효과음 재생
-            playSound();
+            // 색상에 맞는 효과음 재생
+            playSound(currentColorIndex);
             
             // 점프 애니메이션
             character.classList.add('jumping');
             
             // 다음 위치로 이동
             currentPos = (currentPos + 1) % positions.length;
+            
+            // 색상과 모양 변경
+            currentColorIndex = (currentColorIndex + 1) % smileColors.length;
+            const newColor = smileColors[currentColorIndex];
+            const smileFace = character.querySelector('.smile-face');
+            smileFace.style.background = newColor.bg;
+            smileFace.style.boxShadow = `0 10px 30px ${newColor.shadow}`;
+            smileFace.style.borderRadius = newColor.shape;
             
             setTimeout(() => {
                 character.style.left = positions[currentPos].x;
@@ -312,6 +347,40 @@
             if (e.key === 'Enter' || e.keyCode === 13) {
                 e.preventDefault();
                 moveCharacter();
+            }
+            // F11 키로 전체화면
+            if (e.key === 'F11') {
+                e.preventDefault();
+                toggleFullscreen();
+            }
+        });
+        
+        // 전체화면 토글 함수
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log('전체화면 오류:', err);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+        
+        // 전체화면 버튼 클릭
+        document.getElementById('fullscreenBtn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleFullscreen();
+        });
+        
+        // 전체화면 상태 변경 감지
+        document.addEventListener('fullscreenchange', () => {
+            const btn = document.getElementById('fullscreenBtn');
+            if (document.fullscreenElement) {
+                btn.textContent = '🖥️ 나가기';
+            } else {
+                btn.textContent = '🖥️ 전체화면';
             }
         });
         
