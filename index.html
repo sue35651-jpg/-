@@ -20,6 +20,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            transition: background 0.5s ease;
         }
         
         .game-container {
@@ -179,18 +180,18 @@
             { x: '40%', y: '40%' },   // 중앙 (대각선 중간)
         ];
         
-        // 10가지 색상과 모양
+        // 10가지 색상과 모양과 배경색
         const smileColors = [
-            { bg: 'linear-gradient(145deg, #ffeb3b, #ffc107)', shadow: 'rgba(255, 193, 7, 0.5)', shape: '50%' },  // 원 - 노랑
-            { bg: 'linear-gradient(145deg, #ff6b6b, #ee5a6f)', shadow: 'rgba(255, 107, 107, 0.5)', shape: '10%' },  // 둥근사각형 - 빨강
-            { bg: 'linear-gradient(145deg, #4ecdc4, #44a6a0)', shadow: 'rgba(78, 205, 196, 0.5)', shape: '50%' },  // 원 - 청록
-            { bg: 'linear-gradient(145deg, #a8e6cf, #7cc6a5)', shadow: 'rgba(168, 230, 207, 0.5)', shape: '20%' },  // 둥근사각형 - 연두
-            { bg: 'linear-gradient(145deg, #ff9ff3, #f368e0)', shadow: 'rgba(255, 159, 243, 0.5)', shape: '50%' },  // 원 - 분홍
-            { bg: 'linear-gradient(145deg, #ffd93d, #ffb700)', shadow: 'rgba(255, 217, 61, 0.5)', shape: '15%' },  // 둥근사각형 - 황금
-            { bg: 'linear-gradient(145deg, #a8dadc, #457b9d)', shadow: 'rgba(168, 218, 220, 0.5)', shape: '50%' },  // 원 - 하늘
-            { bg: 'linear-gradient(145deg, #dda15e, #bc6c25)', shadow: 'rgba(221, 161, 94, 0.5)', shape: '25%' },  // 둥근사각형 - 갈색
-            { bg: 'linear-gradient(145deg, #b8b8ff, #8a8aff)', shadow: 'rgba(184, 184, 255, 0.5)', shape: '50%' },  // 원 - 보라
-            { bg: 'linear-gradient(145deg, #fca5a5, #f87171)', shadow: 'rgba(252, 165, 165, 0.5)', shape: '30%' }   // 둥근사각형 - 연분홍
+            { bg: 'linear-gradient(145deg, #ffeb3b, #ffc107)', shadow: 'rgba(255, 193, 7, 0.5)', shape: '50%', bodyBg: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)' },  // 원 - 노랑 + 하늘색 배경
+            { bg: 'linear-gradient(145deg, #ff6b6b, #ee5a6f)', shadow: 'rgba(255, 107, 107, 0.5)', shape: '10%', bodyBg: 'linear-gradient(135deg, #fff9c4 0%, #fff59d 100%)' },  // 둥근사각형 - 빨강 + 연노랑 배경
+            { bg: 'linear-gradient(145deg, #4ecdc4, #44a6a0)', shadow: 'rgba(78, 205, 196, 0.5)', shape: '50%', bodyBg: 'linear-gradient(135deg, #ffe0f7 0%, #ffc1e3 100%)' },  // 원 - 청록 + 연분홍 배경
+            { bg: 'linear-gradient(145deg, #a8e6cf, #7cc6a5)', shadow: 'rgba(168, 230, 207, 0.5)', shape: '20%', bodyBg: 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)' },  // 둥근사각형 - 연두 + 복숭아 배경
+            { bg: 'linear-gradient(145deg, #ff9ff3, #f368e0)', shadow: 'rgba(255, 159, 243, 0.5)', shape: '50%', bodyBg: 'linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%)' },  // 원 - 분홍 + 아이스블루 배경
+            { bg: 'linear-gradient(145deg, #ffd93d, #ffb700)', shadow: 'rgba(255, 217, 61, 0.5)', shape: '15%', bodyBg: 'linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%)' },  // 둥근사각형 - 황금 + 연보라 배경
+            { bg: 'linear-gradient(145deg, #a8dadc, #457b9d)', shadow: 'rgba(168, 218, 220, 0.5)', shape: '50%', bodyBg: 'linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%)' },  // 원 - 하늘 + 크림 배경
+            { bg: 'linear-gradient(145deg, #dda15e, #bc6c25)', shadow: 'rgba(221, 161, 94, 0.5)', shape: '25%', bodyBg: 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)' },  // 둥근사각형 - 갈색 + 민트 배경
+            { bg: 'linear-gradient(145deg, #b8b8ff, #8a8aff)', shadow: 'rgba(184, 184, 255, 0.5)', shape: '50%', bodyBg: 'linear-gradient(135deg, #fff9e6 0%, #fff4cc 100%)' },  // 원 - 보라 + 바닐라 배경
+            { bg: 'linear-gradient(145deg, #fca5a5, #f87171)', shadow: 'rgba(252, 165, 165, 0.5)', shape: '30%', bodyBg: 'linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%)' }   // 둥근사각형 - 연분홍 + 아쿠아 배경
         ];
         
         let currentColorIndex = 0;
@@ -324,6 +325,9 @@
             smileFace.style.background = newColor.bg;
             smileFace.style.boxShadow = `0 10px 30px ${newColor.shadow}`;
             smileFace.style.borderRadius = newColor.shape;
+            
+            // 배경색 변경
+            document.body.style.background = newColor.bodyBg;
             
             setTimeout(() => {
                 character.style.left = positions[currentPos].x;
